@@ -2,33 +2,34 @@
 
 #include "extended_char.h"
 
+#include <memory>
 #include <unordered_map>
-#include <vector>
 #include <utility>
+#include <vector>
 
-class Trie {
-private:
-    struct Node {
-        Node* left = nullptr;
-        Node* right = nullptr;
-        uint64_t cnt = 0;
-        ExtendedChar data;
-        bool is_terminated = false;
+namespace NStructures {
 
-        Node(ExtendedChar c, uint64_t cnt);
-        Node(Node* left, Node* right);
+    class Trie {
+    private:
+        struct Node {
+            std::shared_ptr<Node> left;
+            std::shared_ptr<Node> right;
+            uint64_t cnt = 0;
+            ExtendedChar data;
+            bool is_terminated = false;
 
-        void Dfs(std::vector<std::pair<ExtendedChar, std::vector<bool>>>& codes, std::vector<bool>& curr_code) const;
+            Node(ExtendedChar c, uint64_t cnt);
+            Node(const std::shared_ptr<Node>& left, const std::shared_ptr<Node>& right);
 
-        ~Node();
+            void Dfs(std::vector<std::pair<ExtendedChar, std::vector<bool>>>& codes, std::vector<bool>& curr_code) const;
+        };
+
+        std::shared_ptr<Node> root_;
+
+    public:
+        explicit Trie(const std::unordered_map<ExtendedChar, uint64_t>& cnt);
+
+        std::vector<std::pair<ExtendedChar, std::vector<bool>>> AllCodes() const;
     };
 
-    Node* root_;
-
-public:
-    explicit Trie(const std::unordered_map<ExtendedChar, uint64_t>& cnt);
-
-    std::vector<std::pair<ExtendedChar, std::vector<bool>>> AllCodes() const;
-
-    ~Trie();
-};
+}
