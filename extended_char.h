@@ -3,4 +3,8 @@
 #include <cstdint>
 #include <cstdlib>
 
-using ExtendedChar = int16_t;
+namespace NStructures {
+
+    using ExtendedChar = int16_t;
+
+}

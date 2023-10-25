@@ -3,38 +3,22 @@
 #include <queue>
 
 #include <algorithm>
+#include <cassert>
 #include <tuple>
 #include <stdexcept>
 
 namespace NStructures {
 
-    Trie::Node::Node(ExtendedChar c, uint64_t cnt) : cnt(cnt), data(c), is_terminated(true) {
+    Node::Node(ExtendedChar c, uint64_t cnt) : cnt(cnt), cnt_terminated(1), data(c), is_terminated(true) {
     }
 
-    Trie::Node::Node(const std::shared_ptr<Node>& left, const std::shared_ptr<Node>& right)
+    Node::Node(const std::shared_ptr<Node>& left, const std::shared_ptr<Node>& right)
         : left(left),
           right(right),
           cnt(left->cnt + right->cnt),
+          cnt_terminated(left->cnt_terminated + right->cnt_terminated),
           data(std::min(left->data, right->data)),
           is_terminated(false) {
-    }
-
-    void Trie::Node::Dfs(std::vector<std::pair<ExtendedChar, std::vector<bool>>>& codes,
-                        std::vector<bool>& curr_code) const {
-        if (!is_terminated) {
-            auto process_node_ptr = [&codes, &curr_code] (const std::shared_ptr<Node>& node, bool value) {
-                if (node) {
-                    curr_code.push_back(value);
-                    node->Dfs(codes, curr_code);
-                    curr_code.pop_back();
-                }
-            };
-            
-            process_node_ptr(left, false);
-            process_node_ptr(right, true);
-        } else {
-            codes.push_back({data, curr_code});
-        }
     }
 
     Trie::Trie(const std::unordered_map<ExtendedChar, uint64_t>& cnt) : root_(nullptr) {
@@ -61,13 +45,34 @@ namespace NStructures {
         }
     }
 
-    std::vector<std::pair<ExtendedChar, std::vector<bool>>> Trie::AllCodes() const {
-        std::vector<std::pair<ExtendedChar, std::vector<bool>>> result;
+    std::vector<Trie::Code> Trie::AllCodes() const {
+        std::vector<Code> result;
         if (root_) {
-            std::vector<bool> curr_code;
-            root_->Dfs(result, curr_code);
+            result.resize(root_->cnt_terminated);
+            for (size_t i = 0; i < result.size(); ++i) {
+                result[i] = FindCodeByIndex(i);
+            }
         }
         return result;
+    }
+
+    Trie::Code Trie::FindCodeByIndex(size_t index) const {
+        assert(root_ && index < root_->cnt_terminated);
+
+        Code code;
+        auto node = root_;
+        while (!node->is_terminated) {
+            if (node->left->cnt_terminated > index) {
+                code.second.push_back(false);
+                node = node->left;
+            } else {
+                code.second.push_back(true);
+                index -= node->left->cnt_terminated;
+                node = node->right;
+            }
+        }
+        code.first = node->data;
+        return code;
     }
 
 }
